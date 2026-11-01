@@ -1,0 +1,10 @@
+inventory.yml
+group_vars/all.yml
+host_vars/*.yml
+!host_vars/*.example.yml
+.vault_pass
+*.vault_pass
+*.pem
+*.key
+id_*
+*.retry

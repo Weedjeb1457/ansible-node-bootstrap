@@ -1,0 +1,17 @@
+---
+# Порт API ноды и версия образа
+remnanode_port: 2222
+remnanode_image_tag: "2.8.0"
+
+# Файрвол: порты инбаундов и доступ к API только для адреса панели
+firewall_public_ports:
+  - {port: 8443}
+firewall_restricted:
+  - {port: 2222, from_ip: 198.51.100.10}
+
+# Секретный ключ ноды: зашифровать так
+#   printf '%s' "$KEY" | ansible-vault encrypt_string --stdin-name remnanode_secret_key
+# и вставить результат сюда (в репозиторий только шифр, не открытый текст)
+# remnanode_secret_key: !vault |
+#   $ANSIBLE_VAULT;1.1;AES256
+#   ...

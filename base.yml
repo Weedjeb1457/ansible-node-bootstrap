@@ -1,0 +1,6 @@
+---
+- name: Базовая настройка серверов
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  roles:
+    - base

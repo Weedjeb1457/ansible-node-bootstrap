@@ -1,0 +1,18 @@
+---
+- name: Создать каталог ноды
+  ansible.builtin.file:
+    path: "{{ remnanode_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Положить docker-compose.yml ноды
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ remnanode_dir }}/docker-compose.yml"
+    mode: "{{ remnanode_compose_mode }}"
+  no_log: true
+
+- name: Запустить контейнер ноды
+  community.docker.docker_compose_v2:
+    project_src: "{{ remnanode_dir }}"
+    state: present

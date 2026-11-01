@@ -1,0 +1,6 @@
+---
+remnanode_dir: /opt/remnanode
+remnanode_port: 2222
+remnanode_image_tag: "2.8.0"
+remnanode_extra_volumes: []
+remnanode_compose_mode: "0600"

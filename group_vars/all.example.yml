@@ -1,0 +1,4 @@
+---
+# Публичные SSH-ключи, которым разрешён вход как root
+ssh_authorized_keys:
+  - "ssh-ed25519 AAAA... user@host"

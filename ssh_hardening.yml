@@ -1,0 +1,6 @@
+---
+- name: Усиление SSH
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  roles:
+    - ssh_hardening

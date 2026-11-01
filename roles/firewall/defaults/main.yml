@@ -1,0 +1,5 @@
+---
+firewall_ssh_ports: [22]
+firewall_deny_ips: []
+firewall_public_ports: []
+firewall_restricted: []

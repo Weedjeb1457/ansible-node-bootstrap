@@ -1,0 +1,2 @@
+---
+base_journald_max_use: 200M

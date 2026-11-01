@@ -1,0 +1,6 @@
+---
+- name: Защита SSH от перебора
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  roles:
+    - fail2ban

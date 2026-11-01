@@ -1,0 +1,6 @@
+---
+- name: Нода Remnawave
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  roles:
+    - remnanode

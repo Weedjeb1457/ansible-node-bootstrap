@@ -1,0 +1,25 @@
+---
+- name: Установить базовые пакеты
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - ufw
+      - fail2ban
+      - cron
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Создать каталог drop-in для journald
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Задать лимит размера журнала
+  ansible.builtin.copy:
+    content: "[Journal]\nSystemMaxUse={{ base_journald_max_use }}\n"
+    dest: /etc/systemd/journald.conf.d/00-size.conf
+    mode: "0644"
+  notify: Перезапустить journald

@@ -1,0 +1,11 @@
+---
+- name: Полная настройка новой ноды
+  hosts: "{{ target | default('none') }}"
+  gather_facts: true
+  roles:
+    - base
+    - docker
+    - fail2ban
+    - firewall
+    - ssh_hardening
+    - remnanode

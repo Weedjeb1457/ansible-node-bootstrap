@@ -1,0 +1,48 @@
+---
+- name: Установить ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Запретить указанные адреса
+  community.general.ufw:
+    rule: deny
+    from_ip: "{{ item }}"
+  loop: "{{ firewall_deny_ips }}"
+
+- name: Разрешить SSH
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ firewall_ssh_ports }}"
+
+- name: Открыть публичные порты
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto | default('tcp') }}"
+    comment: "{{ item.comment | default(omit) }}"
+  loop: "{{ firewall_public_ports }}"
+
+- name: Открыть порты только для указанных адресов
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto | default('tcp') }}"
+    from_ip: "{{ item.from_ip }}"
+  loop: "{{ firewall_restricted }}"
+
+- name: Входящие запретить по умолчанию
+  community.general.ufw:
+    default: deny
+    direction: incoming
+
+- name: Исходящие разрешить по умолчанию
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+
+- name: Включить ufw
+  community.general.ufw:
+    state: enabled

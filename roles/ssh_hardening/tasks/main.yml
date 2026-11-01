@@ -1,0 +1,33 @@
+---
+- name: Положить публичные ключи для root
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ item }}"
+    state: present
+  loop: "{{ ssh_authorized_keys | default([]) }}"
+
+- name: Проверить, что файл authorized_keys не пуст
+  ansible.builtin.stat:
+    path: /root/.ssh/authorized_keys
+  register: ssh_hardening_keys_file
+
+- name: Остановиться, если ключей нет (иначе потеряем доступ)
+  ansible.builtin.assert:
+    that:
+      - ssh_hardening_keys_file.stat.exists
+      - ssh_hardening_keys_file.stat.size > 0
+    fail_msg: "authorized_keys пуст или отсутствует, пароли не отключаю"
+
+- name: Убедиться, что каталог sshd_config.d существует
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    mode: "0755"
+
+- name: Запретить вход по паролю, root только по ключу
+  ansible.builtin.copy:
+    content: "PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin prohibit-password\n"
+    dest: /etc/ssh/sshd_config.d/00-hardening.conf
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Перезагрузить конфигурацию SSH

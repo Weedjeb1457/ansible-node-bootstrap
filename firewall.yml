@@ -1,0 +1,6 @@
+---
+- name: Файрвол ufw
+  hosts: "{{ target | default('none') }}"
+  gather_facts: false
+  roles:
+    - firewall

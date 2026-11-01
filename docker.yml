@@ -1,0 +1,6 @@
+---
+- name: Установка Docker
+  hosts: "{{ target | default('none') }}"
+  gather_facts: true
+  roles:
+    - docker

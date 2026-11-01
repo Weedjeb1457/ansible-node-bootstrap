@@ -1,4 +1,5 @@
 # ansible-node-bootstrap
+![lint](https://github.com/Weedjeb1457/ansible-node-bootstrap/actions/workflows/lint.yml/badge.svg)
 
 > **EN:** Ansible roles that bring a fresh Ubuntu server to a hardened, ready state and start a proxy node in Docker with one command. Tested on real servers with `--check --diff` and on a clean VPS; passes `ansible-lint` (production profile).
 
@@ -42,11 +43,13 @@
 - Сначала роли описали существующую конфигурацию двух рабочих серверов (Ubuntu 24.04 и 26.04), и в режиме `--check` получилось `changed=0`.
 - Потом роли по очереди применены на чистом VPS (Ubuntu 24.04), повторный запуск `new-node.yml` дал `changed=0`; нода подключилась к панели.
 - `ansible-lint` проходит профиль `production`.
+- Проверка `ansible-lint` запускается в GitHub Actions при каждом коммите.
+- После переименования переменных (по рекомендациям линтера) `new-node.yml` повторно проверен в режиме `--check` на двух рабочих серверах: `changed=0`.
 
 ## Чего здесь нет
 
 - Запуска `new-node.yml` одним прогоном на совершенно чистом сервере (роли проверены по отдельности).
-- Автоматической проверки в CI и тестов Molecule (планируется).
+- Тестов Molecule (планируется).
 - Поддержки Debian и архитектур, кроме amd64.
 - Автоматического заказа сервера и создания ноды в панели (первый вход и ноду в панели создаю вручную).
 

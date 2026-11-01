@@ -1,57 +1,67 @@
 # ansible-node-bootstrap
 ![lint](https://github.com/Weedjeb1457/ansible-node-bootstrap/actions/workflows/lint.yml/badge.svg)
 
-> **EN:** Ansible roles that bring a fresh Ubuntu server to a hardened, ready state and start a proxy node in Docker with one command. Tested on real servers with `--check --diff` and on a clean VPS; passes `ansible-lint` (production profile).
+> **EN:** Ansible roles that bring a fresh Ubuntu server to a hardened state and run a proxy node in Docker with a single playbook. Passes `ansible-lint` (production profile).
 
-Личный проект по автоматизации развёртывания серверов: шесть Ansible-ролей приводят чистый Ubuntu-сервер в рабочее состояние (пакеты, Docker, защита SSH, файрвол) и запускают в Docker ноду прокси на Xray, управляемую панелью Remnawave. Роли выросли из моей собственной рабочей инфраструктуры.
+Личный проект по автоматизации настройки серверов: шесть Ansible-ролей приводят чистый Ubuntu-сервер в рабочее состояние (пакеты, Docker, защита SSH, файрвол) и запускают в Docker ноду прокси на Xray под управлением панели Remnawave. Роли составлены по конфигурации моих рабочих серверов.
 
-## Зачем
+## Роли
 
-Ручная настройка серверов приводит к дрейфу конфигурации: серверы незаметно становятся разными. Здесь настройка описана кодом, а роли идемпотентны: повторный запуск ничего не ломает и сообщает `changed=0`, если сервер уже в нужном состоянии.
-
-## Что внутри
-
-| Роль | Что делает |
+| Роль | Назначение |
 |---|---|
 | `base` | базовые пакеты (curl, ufw, fail2ban, cron, ca-certificates), лимит журнала journald |
 | `docker` | официальный репозиторий Docker (ключ проверяется по SHA-256), docker-ce и compose |
 | `fail2ban` | защита SSH от перебора, порт SSH для jail |
 | `firewall` | ufw: SSH первым правилом, публичные порты, доступ к API ноды только с заданных адресов, входящие запрещены по умолчанию |
-| `ssh_hardening` | вход только по ключу, пароли отключены; перед этим кладёт ключ, проверяет, что он на месте, и проверяет конфиг командой `sshd -t` |
+| `ssh_hardening` | вход только по ключу; перед отключением паролей ключ добавляется и проверяется, конфиг проверяется командой `sshd -t` |
 | `remnanode` | compose-файл ноды из шаблона, секрет из ansible-vault, запуск контейнера с закреплённой версией образа |
 
-Плейбук `new-node.yml` применяет все шесть ролей по порядку.
+Плейбук `new-node.yml` применяет все шесть ролей по порядку. Роли идемпотентны: повторный запуск сообщает `changed=0`, если сервер уже в нужном состоянии.
 
-## Быстрый старт
+## Использование
 
-1. Установи Ansible и коллекции: `pipx install ansible`, затем `ansible-galaxy collection install -r requirements.yml`.
-2. Скопируй примеры и подставь свои значения:
-   `cp inventory.example.yml inventory.yml`, `cp group_vars/all.example.yml group_vars/all.yml`, `cp host_vars/node1.example.yml host_vars/node1.yml`.
-3. Положи свой публичный SSH-ключ на сервер (первый вход всегда вручную, например `ssh-copy-id`).
-4. Зашифруй секрет ноды: `printf '%s' "$KEY" | ansible-vault encrypt_string --stdin-name remnanode_secret_key` и вставь результат в `host_vars/node1.yml`.
-5. Сухой прогон: `ansible-playbook new-node.yml -e target=node1 --check`.
-6. Настоящий запуск: `ansible-playbook new-node.yml -e target=node1`.
+Установка Ansible и коллекций:
 
-## Безопасность запуска
+```
+pipx install ansible
+ansible-galaxy collection install -r requirements.yml
+```
 
-- Цель обязательна: без `-e target=...` плейбуки ничего не делают (хост `none` не существует). Указывай имя **одного** сервера, а не `all` и не группу.
-- Роли меняют SSH и файрвол: ошибка может отрезать доступ. Держи вторую открытую SSH-сессию и сначала проверяй на одноразовом сервере.
-- Секреты: в репозиторий попадают только `*.example.yml`, а пароль vault лежит вне проекта.
+Подготовка переменных из примеров:
+
+```
+cp inventory.example.yml inventory.yml
+cp group_vars/all.example.yml group_vars/all.yml
+cp host_vars/node1.example.yml host_vars/node1.yml
+```
+
+Секрет ноды хранится в ansible-vault. Значение шифруется командой
+
+```
+printf '%s' "$KEY" | ansible-vault encrypt_string --stdin-name remnanode_secret_key
+```
+
+и вставляется в `host_vars/node1.yml`. Первый вход на сервер выполняется вручную (например, `ssh-copy-id`), после этого публичный ключ закрепляется ролью `ssh_hardening`.
+
+Сухой прогон и запуск:
+
+```
+ansible-playbook new-node.yml -e target=node1 --check
+ansible-playbook new-node.yml -e target=node1
+```
+
+## Замечания по безопасности
+
+- Цель запуска задаётся переменной `target`. Без неё плейбуки ничего не выполняют (хоста `none` не существует). В качестве цели указывается имя одного сервера, а не `all` и не группа.
+- Роли меняют SSH и файрвол, поэтому возможна потеря доступа. Перед запуском на рабочем сервере используются сухой прогон и вторая открытая SSH-сессия.
+- В репозитории хранятся только файлы `*.example.yml`. Пароль vault лежит вне проекта.
 
 ## Как проверялось
 
-- Сначала роли описали существующую конфигурацию двух рабочих серверов (Ubuntu 24.04 и 26.04), и в режиме `--check` получилось `changed=0`.
-- Потом роли по очереди применены на чистом VPS (Ubuntu 24.04), повторный запуск `new-node.yml` дал `changed=0`; нода подключилась к панели.
-- `ansible-lint` проходит профиль `production`.
-- Проверка `ansible-lint` запускается в GitHub Actions при каждом коммите.
-- После переименования переменных (по рекомендациям линтера) `new-node.yml` повторно проверен в режиме `--check` на двух рабочих серверах: `changed=0`.
-
-## Чего здесь нет
-
-- Запуска `new-node.yml` одним прогоном на совершенно чистом сервере (роли проверены по отдельности).
-- Тестов Molecule (планируется).
-- Поддержки Debian и архитектур, кроме amd64.
-- Автоматического заказа сервера и создания ноды в панели (первый вход и ноду в панели создаю вручную).
+- Роли описывают конфигурацию двух рабочих серверов (Ubuntu 24.04 и 26.04): в режиме `--check` результат `changed=0`.
+- Роли по очереди применены на чистом VPS (Ubuntu 24.04), после этого `new-node.yml` на том же сервере дал `changed=0`; нода подключилась к панели. Полный прогон `new-node.yml` одним запуском на совершенно чистом сервере не выполнялся.
+- `ansible-lint` проходит профиль `production`, проверка запускается в GitHub Actions при каждом коммите.
+- После переименования переменных `new-node.yml` повторно проверен в режиме `--check` на двух рабочих серверах: `changed=0`.
 
 ## Лицензия
 
